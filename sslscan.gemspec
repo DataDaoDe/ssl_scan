@@ -10,7 +10,7 @@ Gem::Specification.new do |spec|
   spec.email         = ["jwaterfaucett@gmail.com"]
   spec.summary       = %q{Ruby SSL Scanner}
   spec.description   = %q{An SSL Scanner Library and Utility in pure Ruby}
-  spec.homepage      = ""
+  spec.homepage      = "https://github.com/jwaterfaucett/ssl_scan"
   spec.license       = "MIT"
 
   spec.files         = `git ls-files -z`.split("\x0")
