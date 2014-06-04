@@ -3,8 +3,8 @@ module SSLScan
     class Host < Command
       attr_accessor :hostname, :options
 
-      def initialize(hostname, options)
-        super()
+      def initialize(hostname, options={}, output=nil)
+        super([], output)
         @hostname = hostname
         @options  = options
       end
@@ -12,13 +12,14 @@ module SSLScan
       def execute
         parts = hostname.split(":")
         if parts.length == 2
-          display_header(parts[0], parts[1])
+          write_header(parts[0], parts[1])
           scanner = SSLScan::Scanner.new(parts[0], parts[1].to_i)
         else
-          display_header(parts[0])
+          write_header(parts[0])
           scanner = SSLScan::Scanner.new(parts[0])
         end
-        display_ciphers(scanner)
+        write_ciphers(scanner)
+        write_preferred_ciphers(scanner)
         @results << scanner.results
       end
 

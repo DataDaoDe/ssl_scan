@@ -4,8 +4,8 @@ module SSLScan
 
       attr_accessor :file, :hosts
 
-      def initialize(filename="", options)
-        super()
+      def initialize(filename="", options={}, output=nil)
+        super([], output)
         @file = File.read(filename)
         @hosts = @file.split("\n").map(&:strip).select { |h| h.length > 0 }
         @options = options
@@ -15,15 +15,17 @@ module SSLScan
         hosts.each do |host|
           parts = host.split(":")
           if parts.length == 2
-            display_header(parts[0], parts[1])
+            write_header(parts[0], parts[1])
             scanner = SSLScan::Scanner.new(parts[0], parts[1].to_i)
           else
-            display_header(host)
+            write_header(host)
             scanner = SSLScan::Scanner.new(parts[0])
           end
-          display_ciphers(scanner)
+          write_ciphers(scanner)
+          write_preferred_ciphers(scanner)
           @results << scanner.results
         end
+        @results
       end
 
     end

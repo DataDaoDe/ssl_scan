@@ -57,12 +57,23 @@ module SSLScan
           command = SSLScan::Commands::OnlyCertainSSL.new(options)
           command.execute
         else
-          command = SSLScan::Commands::Host.new(argv.last)
+          command = SSLScan::Commands::Host.new(host, options)
           command.execute
         end
       end
 
-      show_certificate(command.results.first.cert)
+      result_set = command.results.compact
+      unless result_set.empty?
+        result_set.each do |result|
+          if result.supports_ssl?
+            show_certificate(result.cert)
+          else
+            show_no_support(host)
+          end
+        end
+      else
+        show_no_support(host)
+      end
     end
 
     alias_method :run, :main
@@ -83,6 +94,10 @@ module SSLScan
       printf("  %s", cert.public_key.to_text)
 
       # TODO: Implement extensions (see: cert.extensions)
+    end
+
+    def show_no_support(host)
+      printf("Host (%s) does not support ssl\n", host)
     end
 
     def self.parse_options(args)

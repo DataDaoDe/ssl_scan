@@ -59,6 +59,10 @@ module SSLScan
       enum_ciphers(:rejected, version)
     end
 
+    def failed(version = :all)
+      enum_ciphers(:failed, version)
+    end
+
     def each_accepted(version = :all)
       accepted(version).each do |cipher_result|
         yield cipher_result
