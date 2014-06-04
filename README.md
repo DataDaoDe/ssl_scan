@@ -11,7 +11,7 @@ In addition to the goals stated above, this library also provides a pure ruby im
 
 Add this line to your application's Gemfile:
 
-    gem 'sslscan'
+    gem 'ssl_scan'
 
 And then execute:
 
@@ -19,7 +19,7 @@ And then execute:
 
 Or install it yourself as:
 
-    $ gem install sslscan
+    $ gem install ssl_scan
 
 ## Usage
 
