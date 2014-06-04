@@ -12,6 +12,7 @@ class Scanner
 
   attr_reader :supported_versions
   attr_reader :peer_supported_versions
+  attr_reader :results
   attr_reader :sslv2
 
   # Initializes the scanner object
@@ -70,7 +71,7 @@ class Scanner
         end
 
         if block_given?
-          yield(ssl_version, cipher_name, key_length, status, scan_result.cert)
+          yield(ssl_version, cipher_name, alg_length, status, scan_result.cert)
         end
         
       end
@@ -80,6 +81,7 @@ class Scanner
       psv << :SSLv3 if scan_result.supports_sslv3?
       psv << :TLSv1 if scan_result.supports_tlsv1?
     end
+    @results = scan_result
     scan_result
   end
 
@@ -164,7 +166,11 @@ class Scanner
         'Timeout'    => @timeout
       )
     rescue ::Exception => e
-      return :rejected
+      if e.kind_of?(Errno::ECONNRESET)
+        return :failed
+      else
+        return :rejected
+      end
     ensure
       if scan_client
         scan_client.close
