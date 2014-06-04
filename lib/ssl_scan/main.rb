@@ -7,8 +7,6 @@ require "optparse"
 require "ostruct"
 
 require "ssl_scan/commands/command"
-require "ssl_scan/commands/targets"
-require "ssl_scan/commands/only_certain_ssl"
 require "ssl_scan/commands/host"
 
 module SSLScan
@@ -17,69 +15,94 @@ module SSLScan
     EXIT_SUCCESS = 0
     EXIT_FAILURE = 1
 
+    SYNTAX    = "ssl_scan [Options] [host:port | host]"
     WEBSITE   = "https://www.testcloud.de"
     COPYRIGHT = "Copyright (C) John Faucett #{Time.now.year}"
 
+    BANNER =<<EOH
+        _                    
+  _____| |  ___ __ __ _ _ _  
+ (_-<_-< | (_-</ _/ _` | ' \ 
+ /__/__/_|_/__/\__\__,_|_||_|
+        |___|               
+
+EOH
+
     attr_accessor :options
+
+
+    def check_host(host, die_on_fail=true)
+      valid = true
+      port  = 443
+      error_msg = "Host invalid"
+      begin
+        if !host
+          error_msg = "Host not given"
+          valid = false
+        else
+          host_parts = host.split(":")
+          host = host_parts.first
+          port = host_parts.last.to_i if host_parts.last != host
+          ::Socket.gethostbyname(host)
+        end
+      rescue ::SocketError => ex
+        error_msg = ex.message
+        valid = false
+      end
+
+      unless valid
+        printf("Error: %s\n", error_msg)
+        exit(EXIT_FAILURE) unless !die_on_fail
+      end
+      return valid
+    end
 
     def main(argc, argv)
       @options = self.class.parse_options(argv)
 
+      host = argv.last
+
       if options.file
-        command = SSLScan::Commands::Targets.new(options.file)
+        file = File.read(options.file)
+        hosts = file.split("\n").map(&:strip).select { |h| h.length > 0 }
+        hosts.each do |h|
+          if check_host(h, false)
+            command = SSLScan::Commands::Host.new(h, options)
+            command.execute
+
+            if command.errors.empty?
+              show_results(command.results)
+            else
+              show_command_errors(h, command.errors) 
+            end
+          end
+        end
+      else
+        check_host(host)
+        command = SSLScan::Commands::Host.new(host, options)
         command.execute
-      else
-        valid = true
-        port  = 443
-        error_msg = "Host invalid"
-        begin
-          host = argv.last
-          if !host
-            error_msg = "Host not given"
-            valid = false
-          else
-            host_parts = host.split(":")
-            host = host_parts.first
-            port = host_parts.last.to_i if host_parts.last != host
-            ::Socket.gethostbyname(host)
-          end
-        rescue ::SocketError => ex
-          error_msg = ex.message
-          valid = false
-        end
-
-        unless valid
-          printf("Error: %s\n", error_msg)
-          exit(EXIT_FAILURE)
-        end
-
-        if (options.only_ssl2 || options.only_ssl3 || options.only_tls1 )
-          command = SSLScan::Commands::OnlyCertainSSL.new(options)
-          command.execute
+        if command.errors.empty?
+          show_results(host, command.results)
         else
-          command = SSLScan::Commands::Host.new(host, options)
-          command.execute
+          show_command_errors(host, command.errors)
         end
       end
 
-      result_set = command.results.compact
-      unless result_set.empty?
-        result_set.each do |result|
-          if result.supports_ssl?
-            show_certificate(result.cert)
-          else
-            show_no_support(host)
-          end
-        end
-      else
-        show_no_support(host)
-      end
     end
 
     alias_method :run, :main
 
-    def self.show_version_info
-      printf("ssl_scan version %s\n%s\n%s\n", VERSION::STRING, WEBSITE, COPYRIGHT)
+    def self.version_info
+      sprintf("ssl_scan version %s\n%s\n%s\n", VERSION::STRING, WEBSITE, COPYRIGHT)
+    end
+
+    def show_results(host, results)
+      result_set = results.compact
+      unless result_set.empty?
+        result_set.each do |result|
+          show_certificate(result.cert)
+        end
+      end
     end
 
     def show_certificate(cert)
@@ -96,8 +119,8 @@ module SSLScan
       # TODO: Implement extensions (see: cert.extensions)
     end
 
-    def show_no_support(host)
-      printf("Host (%s) does not support ssl\n", host)
+    def show_command_errors(host, errors)
+      printf("Error[%s]: (%s)\n", host, errors.join(" "))
     end
 
     def self.parse_options(args)
@@ -109,7 +132,10 @@ module SSLScan
       options.only_tls1 = false
 
       opts = OptionParser.new do |opts|
-        opts.banner = "Command: ssl_scan [options] [host:port | host]"
+        opts.banner = sprintf("%s%s", BANNER, version_info)
+        
+        opts.separator ""
+        opts.separator "Usage: #{SYNTAX}"
 
         opts.separator ""
         opts.separator "Options:"
@@ -129,17 +155,17 @@ module SSLScan
 
         opts.on( "--ssl2",
                  "Only check SSLv2 ciphers.") do
-          options.only_ssl2 = true
+          options.only_ssl2 = :SSLv2
         end
 
         opts.on( "--ssl3",
                  "Only check SSLv3 ciphers.") do
-          options.only_ssl3 = true
+          options.only_ssl3 = :SSLv3
         end
 
         opts.on( "--tls1",
                  "Only check TLSv1 ciphers.") do
-          options.only_tls1 = true
+          options.only_tls1 = :TLSv1
         end
 
         opts.on( "-d",
@@ -158,7 +184,7 @@ module SSLScan
         opts.on_tail( "-v",
                       "--version",
                       "Display the program version.") do
-          show_version_info
+          printf("%s", version_info)
           exit(EXIT_SUCCESS)
         end
 

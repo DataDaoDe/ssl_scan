@@ -57,10 +57,7 @@ class Scanner
     scan_result.openssl_sslv2 = sslv2
     # If we can't get any SSL connection, then don't bother testing
     # individual ciphers.
-    if test_ssl == :rejected and test_tls == :rejected
-      return scan_result
-    end
-
+    
     @supported_versions.each do |ssl_version|
       sslctx = OpenSSL::SSL::SSLContext.new(ssl_version)
       sslctx.ciphers.each do |cipher_name, ssl_ver, key_length, alg_length|
@@ -85,7 +82,32 @@ class Scanner
     scan_result
   end
 
-  
+  def scan_ssl_version(ssl_version, &block)
+    scan_result = SSLScan::Result.new
+    scan_result.openssl_sslv2 = sslv2
+    # If we can't get any SSL connection, then don't bother testing
+    # individual ciphers.
+    if ([:rejected, :failed].include?(test_ssl) and [:rejected, :failed].include?(test_tls)) or !@supported_versions.include?(ssl_version)
+      return scan_result
+    end
+
+      sslctx = OpenSSL::SSL::SSLContext.new(ssl_version)
+      sslctx.ciphers.each do |cipher_name, ssl_ver, key_length, alg_length|
+      status = test_cipher(ssl_version, cipher_name)
+      scan_result.add_cipher(ssl_version, cipher_name, key_length, status)
+      if status == :accepted and scan_result.cert.nil?
+        scan_result.cert = get_cert(ssl_version, cipher_name)
+      end
+
+      if block_given?
+        yield(ssl_version, cipher_name, alg_length, status, scan_result.cert)
+      end
+      
+    end
+    @results = scan_result
+    scan_result
+  end
+
   def get_preferred_ciphers
     ssl_versions = {}.tap do |v|
       @supported_versions.each { |sv| v[sv] = [] } 
@@ -120,7 +142,11 @@ class Scanner
         'Timeout'    => @timeout
       )
     rescue ::Exception => e
-      return :rejected
+      if e.kind_of?(Errno::ECONNRESET)
+        return :failed
+      else
+        return :rejected
+      end
     ensure
       if scan_client
         scan_client.close
@@ -140,7 +166,11 @@ class Scanner
         'Timeout'    => @timeout
       )
     rescue ::Exception => e
-      return :rejected
+      if e.kind_of?(Errno::ECONNRESET)
+        return :failed
+      else
+        return :rejected
+      end
     ensure
       if scan_client
         scan_client.close
