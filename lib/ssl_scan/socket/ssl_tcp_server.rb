@@ -1,7 +1,5 @@
 # -*- coding: binary -*-
-require 'ssl_scan/socket'
 require 'ssl_scan/socket/tcp_server'
-require 'ssl_scan/io/stream_server'
 
 ###
 #

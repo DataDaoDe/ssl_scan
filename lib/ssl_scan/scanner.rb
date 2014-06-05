@@ -1,6 +1,3 @@
-require 'ssl_scan/socket'
-require 'ssl_scan/result'
-
 module SSLScan
 
 class Scanner

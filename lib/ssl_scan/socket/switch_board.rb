@@ -1,7 +1,6 @@
 # -*- coding: binary -*-
 require 'singleton'
 require 'thread'
-require 'ssl_scan/socket'
 
 module SSLScan
 module Socket

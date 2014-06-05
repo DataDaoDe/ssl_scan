@@ -1,12 +1,9 @@
 # -*- coding: binary -*-
 require 'singleton'
-require 'ssl_scan/socket'
-require 'ssl_scan/socket/tcp'
 require 'ssl_scan/socket/ssl_tcp'
 require 'ssl_scan/socket/ssl_tcp_server'
 require 'ssl_scan/socket/udp'
 require 'ssl_scan/socket/ip'
-require 'timeout'
 
 ###
 #

@@ -1,5 +1,5 @@
 # -*- coding: binary -*-
-require 'ssl_scan/socket'
+
 ###
 #
 # This class provides methods for interacting with an SSL TCP client

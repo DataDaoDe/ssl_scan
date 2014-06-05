@@ -1,5 +1,4 @@
 # -*- coding: binary -*-
-require 'ssl_scan/sync/thread_safe'
 
 module SSLScan
 module IO

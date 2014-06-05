@@ -118,7 +118,7 @@ module SSLScan
       unless key_length.kind_of? Fixnum
         raise ArgumentError, "Must supply a valid key length"
       end
-      unless [:accepted, :rejected].include? status
+      unless [:accepted, :rejected, :failed].include? status
         raise ArgumentError, "Status must be either :accepted or :rejected"
       end
 
