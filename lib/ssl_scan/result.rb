@@ -7,10 +7,12 @@ module SSLScan
 
     attr_reader :ciphers
     attr_reader :supported_versions
+    attr_reader :peer_verified
 
     def initialize()
       @cert = nil
       @ciphers = Set.new
+      @peer_verified = false
       @supported_versions = [:SSLv2, :SSLv3, :TLSv1]
     end
 

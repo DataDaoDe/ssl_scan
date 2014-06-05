@@ -133,6 +133,11 @@ EOH
       unless result_set.empty?
         result_set.each do |result|
           show_certificate(result.cert)
+
+          # TODO: Implement certificate verification
+          printf _("Verify Certificate:")
+          printf _("  NOT IMPLEMENTED")
+          printf("\n")
         end
       end
     end
@@ -176,8 +181,6 @@ EOH
           puts _("    %{value}") % { value: extension.value }
         end
       end
-
-      # TODO: Implement certificate verification
     end
 
     def show_command_errors(host, errors)

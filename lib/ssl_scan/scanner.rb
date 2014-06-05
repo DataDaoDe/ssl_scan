@@ -122,6 +122,10 @@ class Scanner
           'Timeout'    => @timeout
         )
         ssl_versions[ssl_version] = scan_client.cipher
+
+        if scan_client
+          scan_client.close
+        end
       rescue => ex
         ssl_versions.delete(ssl_version)
       end

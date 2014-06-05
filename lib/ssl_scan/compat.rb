@@ -56,6 +56,10 @@ def self.is_linux
   @@is_linux = (RUBY_PLATFORM =~ /linux/) ? true : false
 end
 
+def self.is_debian
+  return self.is_linux && File.exists?('/etc/debian_version')
+end
+
 def self.is_bsdi
   return @@is_bsdi if @@is_bsdi
   @@is_bsdi = (RUBY_PLATFORM =~ /bsdi/i) ? true : false

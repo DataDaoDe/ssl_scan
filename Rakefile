@@ -1,4 +1,6 @@
 require "bundler/gem_tasks"
+require "net/http"
+require "ssl_scan/util"
 
 namespace :gettext do
 
@@ -13,4 +15,19 @@ namespace :gettext do
     end
   end
 
+end
+
+namespace :ssl do
+  desc 'fetch cacert from curl site' 
+  task :get_cert do
+    uri = URI("http://curl.haxx.se")
+    http = Net::HTTP.new(uri.host, uri.port) 
+    req  = Net::HTTP::Get.new('/ca/cacert.pem')
+    res  = http.request(req)
+    target_file = File.join(SSLScan::Util::ROOT, "data/cacert.pem")
+    File.open(target_file, "w+") do |f|
+      puts "writing to file: #{target_file}"
+      f.write(res.body)
+    end
+  end
 end
