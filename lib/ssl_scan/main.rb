@@ -6,6 +6,7 @@
 require "ssl_scan/version"
 require "ssl_scan/compat"
 require "ssl_scan/result"
+require "ssl_scan/util"
 require "timeout"
 require "thread"
 require "ssl_scan/sync/thread_safe"
@@ -18,19 +19,42 @@ require "ssl_scan/scanner"
 require "openssl"
 require "optparse"
 require "ostruct"
+require "fast_gettext"
 
 require "ssl_scan/commands/command"
 require "ssl_scan/commands/host"
 
+# 
+# Setup Translations
+# 
+FastGettext.add_text_domain('ssl_scan', path: File.join(SSLScan::Util::ROOT, 'locale'))
+FastGettext.text_domain = 'ssl_scan'
+FastGettext.available_locales = ['en', 'de']
+active_locale = "en"
+['LC_ALL', 'LANG', 'LANGUAGE'].each do |env_lang|
+  lang = ENV[env_lang]
+  if lang
+    lang = lang[0..1]
+    if FastGettext.available_locales.include?(lang)
+      active_locale = lang
+      break
+    end
+  end
+end
+FastGettext.locale = active_locale
+
+
 module SSLScan
   class Main
+
+    include FastGettext::Translation
 
     EXIT_SUCCESS = 0
     EXIT_FAILURE = 1
 
-    SYNTAX    = "ssl_scan [Options] [host:port | host]"
+    SYNTAX    = _("ssl_scan [Options] [host:port | host]")
     WEBSITE   = "https://www.testcloud.de"
-    COPYRIGHT = "Copyright (C) John Faucett #{Time.now.year}"
+    COPYRIGHT = _("Copyright (C) John Faucett %{year}") % { year: Time.now.year }
 
     BANNER =<<EOH
         _                    
@@ -47,10 +71,10 @@ EOH
     def check_host(host, die_on_fail=true)
       valid = true
       port  = 443
-      error_msg = "Host invalid"
+      error_msg = _("Host invalid")
       begin
         if !host
-          error_msg = "Host not given"
+          error_msg = _("Host not given")
           valid = false
         else
           host_parts = host.split(":")
@@ -64,7 +88,7 @@ EOH
       end
 
       unless valid
-        printf("Error: %s\n", error_msg)
+        printf _("Error: %{error}\n") % { error: error_msg }
         exit(EXIT_FAILURE) unless !die_on_fail
       end
       return valid
@@ -106,7 +130,7 @@ EOH
     alias_method :run, :main
 
     def self.version_info
-      sprintf("ssl_scan version %s\n%s\n%s\n", VERSION::STRING, WEBSITE, COPYRIGHT)
+      _("ssl_scan version %{version}\n%{web}\n%{copy}\n") % { version: VERSION::STRING, web: WEBSITE, copy: COPYRIGHT}
     end
 
     def show_results(host, results)
@@ -119,8 +143,8 @@ EOH
     end
 
     def show_certificate(cert)
-      printf("SSL Certificate:\n")
-      printf("  Version: %d\n", cert.version)
+      printf _("SSL Certificate:\n")
+      printf _("  Version: %{version}\n") % { version: cert.version }
       printf("  Serial Number: %s\n", cert.serial.to_s(16))
       printf("  Signature Algorithm: %s\n", cert.signature_algorithm)
       printf("  Issuer: %s\n", cert.issuer.to_s)
@@ -155,8 +179,8 @@ EOH
 
         # File containing list of hosts to check
         opts.on( "-t", 
-                 "--targets FILE",
-                 "A file containing a list of hosts to check with syntax ( host | host:port).") do |filename|
+                 _("--targets FILE"),
+                 _("A file containing a list of hosts to check with syntax ( host | host:port).")) do |filename|
           options.file = filename
         end
 

@@ -18,7 +18,10 @@ Gem::Specification.new do |spec|
   spec.test_files    = spec.files.grep(%r{^(test|spec|features)/})
   spec.require_paths = ["lib"]
 
+  spec.add_runtime_dependency "fast_gettext", "~> 0.8"
+
   spec.add_development_dependency "bundler", "~> 1.5"
   spec.add_development_dependency "rake"
-  spec.add_development_dependency "rspec", "~> 3.0.0"
+  spec.add_development_dependency "rspec", "~> 3.0"
+  spec.add_development_dependency "gettext"
 end
