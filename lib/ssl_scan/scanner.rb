@@ -88,8 +88,9 @@ class Scanner
       return scan_result
     end
 
-      sslctx = OpenSSL::SSL::SSLContext.new(ssl_version)
-      sslctx.ciphers.each do |cipher_name, ssl_ver, key_length, alg_length|
+    sslctx = OpenSSL::SSL::SSLContext.new(ssl_version)
+    sslctx.ciphers.each do |cipher_name, ssl_ver, key_length, alg_length|
+
       status = test_cipher(ssl_version, cipher_name)
       scan_result.add_cipher(ssl_version, cipher_name, key_length, status)
       if status == :accepted and scan_result.cert.nil?
@@ -126,6 +127,36 @@ class Scanner
       end
     end
     ssl_versions
+  end
+
+
+  def get_first_valid_cert
+    scan_result = SSLScan::Result.new
+    scan_result.openssl_sslv2 = sslv2
+    @supported_versions.each do |ssl_version|
+      begin
+        scan_client = SSLScan::Socket::Tcp.create(
+          'Context'    => @context,
+          'PeerHost'   => @host,
+          'PeerPort'   => @port,
+          'SSL'        => true,
+          'SSLVersion' => ssl_version,
+          'Timeout'    => @timeout
+        )
+        cipher_name = scan_client.cipher[0]
+        key_length  = scan_client.cipher[3]
+        status = test_cipher(ssl_version, cipher_name)
+        scan_result.add_cipher(ssl_version, cipher_name, key_length, status)
+        if status == :accepted and scan_result.cert.nil?
+          scan_result.cert = get_cert(ssl_version, cipher_name)
+          break
+        end
+      rescue => ex
+        # noop
+      end
+    end
+    @results = scan_result
+    scan_result
   end
 
   def test_ssl

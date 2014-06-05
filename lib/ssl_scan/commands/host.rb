@@ -29,9 +29,14 @@ module SSLScan
           write_header(parts[0])
         end
 
-        write_ciphers(scanner)
-        write_preferred_ciphers(scanner)
-        @results << scanner.results
+        if options.only_cert
+          scanner.get_first_valid_cert
+          @results << scanner.results
+        else
+          write_ciphers(scanner)
+          write_preferred_ciphers(scanner)
+          @results << scanner.results
+        end
       end
 
     end # Host

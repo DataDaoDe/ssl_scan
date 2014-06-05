@@ -148,7 +148,36 @@ EOH
       printf("  Subject: %s\n", cert.subject.to_s)
       printf("  %s", cert.public_key.to_text)
 
-      # TODO: Implement extensions (see: cert.extensions)
+      unless cert.extensions.empty?
+        puts _("X509v3 Extensions:")
+        cert.extensions.each do |extension|
+          case extension.oid
+          when 'keyUsage'
+            puts _("  X509v3 Key Usage: critical") if extension.critical?
+          when 'certificatePolicies'
+            puts _("  X509v3 Certificate Policies:")
+          when 'subjectAltName'
+            puts _("  X509v3 Subject Alternative Name:")
+          when 'basicConstraints'
+            puts _("  X509v3 Basic Constraints:")
+          when 'extendedKeyUsage'
+            puts _("  X509v3 Extended Key Usage:")
+          when 'crlDistributionPoints'
+            puts _("  X509v3 CRL Distribution Points:")
+          when 'authorityInfoAccess'
+            puts _("  Authority Information Access:")
+          when 'subjectKeyIdentifier'
+            puts _("  X509v3 Subject Key Identifier:")
+          when 'authorityKeyIdentifier'
+            puts _("  X509v3 Authority Key Identifier:")
+          else
+            puts extension.oid
+          end
+          puts _("    %{value}") % { value: extension.value }
+        end
+      end
+
+      # TODO: Implement certificate verification
     end
 
     def show_command_errors(host, errors)
@@ -162,6 +191,7 @@ EOH
       options.only_ssl2 = false
       options.only_ssl3 = false
       options.only_tls1 = false
+      options.only_cert = false
 
       opts = OptionParser.new do |opts|
         opts.banner = sprintf("%s%s", BANNER, version_info)
@@ -198,6 +228,12 @@ EOH
         opts.on( "--tls1",
                  "Only check TLSv1 ciphers.") do
           options.only_tls1 = :TLSv1
+        end
+
+        opts.on( "-c",
+                 "--cert",
+                 "Only get the server certificate") do
+          options.only_cert = true
         end
 
         opts.on( "-d",

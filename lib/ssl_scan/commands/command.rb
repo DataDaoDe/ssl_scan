@@ -1,9 +1,8 @@
-require "stringio"
-
 module SSLScan
   module Commands
     class Command
       attr_accessor :results, :options, :stream, :errors
+      include FastGettext::Translation
 
       def initialize(results=[], stream=nil)
         @results = results
@@ -17,11 +16,11 @@ module SSLScan
 
       # Display Methods
       def write_header(host, port=443)
-        stream.printf "\nTesting SSL server #{host} on port #{port}"
+        stream.printf _("\nTesting SSL server %{host} on port %{port}\n") % { host: host, port: port }
       end
 
       def write_preferred_ciphers(scanner)
-        stream.printf("\nServer Preferred Cipher(s)\n")
+        stream.printf _("\nServer Preferred Cipher(s)\n")
         ciphers = scanner.get_preferred_ciphers
         ciphers.each do |c|
           if c.length > 1 && !c[1].empty?
@@ -32,7 +31,7 @@ module SSLScan
       end
 
       def write_ciphers(scanner=nil)
-        stream.printf "\nSupported Server Cipher(s):\n"
+        stream.printf _("\nSupported Server Cipher(s):\n")
 
         sslv = options.only_ssl2 || options.only_ssl3 || options.only_tls1 || false
         
