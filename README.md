@@ -2,7 +2,7 @@
 
 SSLScan is an extraction of the the sslscan module from the [metasploit-framework](https://github.com/rapid7/metasploit-framework). It provides lower level tools for testing sslv2/3 and tls connections with servers.
 
-However, the sslscan module in metasploit is mainly used for finding weakpoints in SSL armor. What this gem does is adapt some of that functionality to provide ways for the user to debug ssl connections and conversely make ssl connections work - not discover weakpoints. For instance, maybe in your client you are attempting to use SSLv3 to connect to a server and throwing exceptions, you could use this gem to find out that SSLv3 is not supported by the peer and use TLSv1 with the servers preferred cipher instead to allow your client application to still work.
+However, the sslscan module in metasploit is mainly used for finding weakpoints in SSL armor. What this gem does is adapt some of that functionality to provide ways for the user to debug ssl connections and programmatically make ssl connections work - not discover weakpoints. For instance, perhaps in your client you are attempting to use SSLv3 to connect to a server and the attempts are throwing exceptions, you could use this gem to find out that SSLv3 is not supported by the peer and use TLSv1 with the server's preferred cipher instead to allow your client application to still work.
 
 In addition to the goals stated above, this library also provides a pure ruby implementation for [sslscan](http://sourceforge.net/projects/sslscan/), with some added nicities.
 
